@@ -88,3 +88,79 @@ resilience4j:
       clientesService:
         maxAttempts: 3
         waitDuration: 1s
+
+/*
+server:
+  port: 8082
+
+spring:
+  application:
+    name: servicio-cliente
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/cliente_db
+    username: postgres
+    password: cjm81238
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/logistica-realm
+          jwk-set-uri: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/certs
+*/
+
+/*
+server:
+  port: 8084
+
+spring:
+  application:
+    name: servicio-tarifa
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tarifa_db
+    username: postgres
+    password: cjm81238
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/logistica-realm
+*/
+
+/*
+server:
+  port: 8083
+
+spring:
+  application:
+    name: servicio-flota
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/flota_db
+    username: postgres
+    password: cjm81238
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/logistica-realm
+*/

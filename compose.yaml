@@ -1,9 +1,214 @@
 services:
-  postgres:
-    image: 'postgres:latest'
+  # ==================== BASES DE DATOS ====================
+  
+  postgres-logistica:
+    image: postgres:15-alpine
+    container_name: postgres-logistica
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      POSTGRES_DB: logistica_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: cjm81238
     ports:
-      - '5432'
+      - "5432:5432"
+    volumes:
+      - postgres-logistica-data:/var/lib/postgresql/data
+    networks:
+      - logistica-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-cliente:
+    image: postgres:15-alpine
+    container_name: postgres-cliente
+    environment:
+      POSTGRES_DB: cliente_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: cjm81238
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-cliente-data:/var/lib/postgresql/data
+    networks:
+      - logistica-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-flota:
+    image: postgres:15-alpine
+    container_name: postgres-flota
+    environment:
+      POSTGRES_DB: flota_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: cjm81238
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-flota-data:/var/lib/postgresql/data
+    networks:
+      - logistica-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-tarifa:
+    image: postgres:15-alpine
+    container_name: postgres-tarifa
+    environment:
+      POSTGRES_DB: tarifa_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: cjm81238
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-tarifa-data:/var/lib/postgresql/data
+    networks:
+      - logistica-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== KEYCLOAK ====================
+  
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres-keycloak:5432/keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: cjm81238
+      KC_HOSTNAME_STRICT: false
+      KC_HTTP_ENABLED: true
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres-keycloak
+    networks:
+      - logistica-network
+    command: start-dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  postgres-keycloak:
+    image: postgres:15-alpine
+    container_name: postgres-keycloak
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: cjm81238
+    volumes:
+      - postgres-keycloak-data:/var/lib/postgresql/data
+    networks:
+      - logistica-network
+
+  # ==================== MICROSERVICIOS ====================
+  
+  servicio-logistica:
+    build:
+      context: ./servicio-logistico
+      dockerfile: Dockerfile
+    container_name: servicio-logistica
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-logistica:5432/logistica_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: cjm81238
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/logistica-realm
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/logistica-realm/protocol/openid-connect/certs
+      MICROSERVICES_CLIENTES_URL: http://servicio-cliente:8082
+      MICROSERVICES_FLOTA_URL: http://servicio-flota:8083
+      MICROSERVICES_TARIFAS_URL: http://servicio-tarifa:8084
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres-logistica
+      - keycloak
+      - servicio-cliente
+      - servicio-flota
+      - servicio-tarifa
+    networks:
+      - logistica-network
+    restart: on-failure
+
+  servicio-cliente:
+    build:
+      context: ./servicio-cliente
+      dockerfile: Dockerfile
+    container_name: servicio-cliente
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-cliente:5432/cliente_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: cjm81238
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/logistica-realm
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres-cliente
+      - keycloak
+    networks:
+      - logistica-network
+    restart: on-failure
+
+  servicio-flota:
+    build:
+      context: ./servicio-flota
+      dockerfile: Dockerfile
+    container_name: servicio-flota
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-flota:5432/flota_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: cjm81238
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/logistica-realm
+    ports:
+      - "8083:8083"
+    depends_on:
+      - postgres-flota
+      - keycloak
+    networks:
+      - logistica-network
+    restart: on-failure
+
+  servicio-tarifa:
+    build:
+      context: ./servicio-tarifa
+      dockerfile: Dockerfile
+    container_name: servicio-tarifa
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-tarifa:5432/tarifa_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: cjm81238
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/logistica-realm
+    ports:
+      - "8084:8084"
+    depends_on:
+      - postgres-tarifa
+      - keycloak
+    networks:
+      - logistica-network
+    restart: on-failure
+
+networks:
+  logistica-network:
+    driver: bridge
+
+volumes:
+  postgres-logistica-data:
+  postgres-cliente-data:
+  postgres-flota-data:
+  postgres-tarifa-data:
+  postgres-keycloak-data:
