@@ -1,8 +1,8 @@
 package com.grupo81.controller;
 
-import com.grupo81.servicio_flota.dtos.request.*;
-import com.grupo81.servicio_flota.dtos.response.*;
-import com.grupo81.servicio_flota.services.CamionService;
+import com.grupo81.dtos.request.*;
+import com.grupo81.dtos.response.*;
+import com.grupo81.services.CamionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

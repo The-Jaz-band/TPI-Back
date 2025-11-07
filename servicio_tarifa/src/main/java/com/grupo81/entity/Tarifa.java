@@ -1,4 +1,4 @@
-package com.grupo81.servicio_tarifa.entity;
+package com.grupo81.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

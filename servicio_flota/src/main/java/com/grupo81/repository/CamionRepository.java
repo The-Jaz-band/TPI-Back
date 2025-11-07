@@ -1,6 +1,6 @@
-package com.grupo81.servicio_flota.repository;
+package com.grupo81.repository;
 
-import com.grupo81.servicio_flota.entity.Camion;
+import com.grupo81.entity.Camion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

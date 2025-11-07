@@ -1,4 +1,4 @@
-package com.grupo81.servicio_cliente.dtos.cliente.response;
+package com.grupo81.dtos.cliente.response;
 
 import lombok.*;
 import java.time.LocalDateTime;

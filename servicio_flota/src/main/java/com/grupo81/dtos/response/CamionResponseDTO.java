@@ -1,4 +1,4 @@
-package com.grupo81.servicio_flota.dtos.response;
+package com.grupo81.dtos.response;
 
 import lombok.*;
 import java.math.BigDecimal;

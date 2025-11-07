@@ -1,15 +1,15 @@
-package com.grupo81.servicio_cliente.services;
+package com.grupo81.services;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.grupo81.servicio_cliente.dtos.cliente.request.ClienteCreateRequestDTO;
-import com.grupo81.servicio_cliente.dtos.cliente.request.ClienteUpdateRequestDTO;
-import com.grupo81.servicio_cliente.dtos.cliente.response.ClienteResponseDTO;
-import com.grupo81.servicio_cliente.entity.Cliente;
-import com.grupo81.servicio_cliente.repository.ClienteRepository;
+import com.grupo81.dtos.cliente.request.ClienteCreateRequestDTO;
+import com.grupo81.dtos.cliente.request.ClienteUpdateRequestDTO;
+import com.grupo81.dtos.cliente.response.ClienteResponseDTO;
+import com.grupo81.entity.Cliente;
+import com.grupo81.repository.ClienteRepository;
 
 import java.util.List;
 import java.util.UUID;

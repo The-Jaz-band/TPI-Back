@@ -1,4 +1,4 @@
-package com.grupo81.servicio_cliente.controller;
+package com.grupo81.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -11,10 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.grupo81.servicio_cliente.dtos.cliente.request.ClienteCreateRequestDTO;
-import com.grupo81.servicio_cliente.dtos.cliente.request.ClienteUpdateRequestDTO;
-import com.grupo81.servicio_cliente.dtos.cliente.response.ClienteResponseDTO;
-import com.grupo81.servicio_cliente.services.ClienteService;
+import com.grupo81.dtos.cliente.request.ClienteCreateRequestDTO;
+import com.grupo81.dtos.cliente.request.ClienteUpdateRequestDTO;
+import com.grupo81.dtos.cliente.response.ClienteResponseDTO;
+import com.grupo81.services.ClienteService;
 
 import java.util.List;
 import java.util.UUID;

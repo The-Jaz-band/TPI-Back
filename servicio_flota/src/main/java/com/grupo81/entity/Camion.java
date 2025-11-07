@@ -1,4 +1,4 @@
-package com.grupo81.servicio_flota.entity;
+package com.grupo81.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

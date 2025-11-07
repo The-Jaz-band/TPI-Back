@@ -1,4 +1,4 @@
-package com.grupo81.servicio_cliente.dtos.cliente.request;
+package com.grupo81.dtos.cliente.request;
 
 import jakarta.validation.constraints.*;
 import lombok.*;

@@ -1,6 +1,6 @@
-package com.grupo81.servicio_tarifa.repository;
+package com.grupo81.repository;
 
-import com.grupo81.servicio_tarifa.entity.Tarifa;
+import com.grupo81.entity.Tarifa;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package com.grupo81.servicio_flota.dtos.request;
+package com.grupo81.dtos.request;
 
 import jakarta.validation.constraints.*;
 import lombok.*;

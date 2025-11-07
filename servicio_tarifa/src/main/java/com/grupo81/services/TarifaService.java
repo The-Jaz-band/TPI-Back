@@ -1,9 +1,9 @@
-package com.grupo81.servicio_tarifa.services;
+package com.grupo81.services;
 
-import com.grupo81.servicio_tarifa.dtos.request.*;
-import com.grupo81.servicio_tarifa.dtos.response.*;
-import com.grupo81.servicio_tarifa.entity.Tarifa;
-import com.grupo81.servicio_tarifa.repository.TarifaRepository;
+import com.grupo81.dtos.request.*;
+import com.grupo81.dtos.response.*;
+import com.grupo81.entity.Tarifa;
+import com.grupo81.repository.TarifaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

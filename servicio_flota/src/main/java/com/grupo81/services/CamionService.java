@@ -1,9 +1,9 @@
-package com.grupo81.servicio_flota.services;
+package com.grupo81.services;
 
-import com.grupo81.servicio_flota.dtos.request.*;
-import com.grupo81.servicio_flota.dtos.response.*;
-import com.grupo81.servicio_flota.entity.Camion;
-import com.grupo81.servicio_flota.repository.CamionRepository;
+import com.grupo81.dtos.request.*;
+import com.grupo81.dtos.response.*;
+import com.grupo81.entity.Camion;
+import com.grupo81.repository.CamionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
