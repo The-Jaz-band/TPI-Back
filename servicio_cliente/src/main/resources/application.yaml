@@ -1,0 +1,30 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: servicio_cliente
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/cliente_db
+    username: back-admin
+    password: admin123
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/logistica-realm
+  profiles:
+    active: dev # Agregar esto temporalmente
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
