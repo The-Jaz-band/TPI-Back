@@ -20,6 +20,8 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8080/realms/logistica-realm
+  profiles:
+    active: dev # Agregar esto temporalmente
 
 springdoc:
   api-docs:

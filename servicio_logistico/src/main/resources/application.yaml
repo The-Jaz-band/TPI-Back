@@ -34,6 +34,8 @@ spring:
         jwt:
           issuer-uri: http://localhost:8080/realms/logistica-realm
           jwk-set-uri: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/certs
+  profiles:
+    active: dev # Agregar esto temporalmente
 
 # Configuración de Swagger/OpenAPI
 springdoc:
