@@ -6,7 +6,7 @@ spring:
     name: servicio_tarifa
   
   datasource:
-    url: jdbc:postgresql://localhost:5435/tarifa_db
+    url: jdbc:postgresql://localhost:5432/tarifa_db
     username: back-admin
     password: admin123
   

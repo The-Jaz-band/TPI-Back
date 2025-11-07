@@ -6,7 +6,7 @@ spring:
     name: servicio_flota
   
   datasource:
-    url: jdbc:postgresql://localhost:5434/flota_db
+    url: jdbc:postgresql://localhost:5432/flota_db
     username: back-admin
     password: admin123
   
