@@ -1,4 +1,4 @@
-package com.grupo81.servicio_logistico.dtos.solicitud.request;
+package com.grupo81.dtos.solicitud.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;

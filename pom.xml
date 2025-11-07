@@ -22,10 +22,10 @@
     
     <!-- MÓDULOS (microservicios) -->
     <modules>
-        <module>servicio-logistico</module>
-        <module>servicio-cliente</module>
-        <module>servicio-flota</module>
-        <module>servicio-tarifa</module>
+        <module>servicio_logistico</module>
+        <module>servicio_cliente</module>
+        <module>servicio_flota</module>
+        <module>servicio_tarifa</module>
     </modules>
     
     <properties>

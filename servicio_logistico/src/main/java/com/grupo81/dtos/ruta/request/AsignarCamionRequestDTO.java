@@ -1,4 +1,4 @@
-package com.grupo81.servicio_logistico.dtos.ruta.request;
+package com.grupo81.dtos.ruta.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

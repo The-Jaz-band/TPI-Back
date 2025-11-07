@@ -1,4 +1,4 @@
-package com.grupo81.servicio_logistico.dtos.solicitud.response;
+package com.grupo81.dtos.solicitud.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.grupo81.servicio_logistico.dtos.solicitud.request.UbicacionDTO;
+import com.grupo81.dtos.solicitud.request.UbicacionDTO;
 
 @Data
 @Builder

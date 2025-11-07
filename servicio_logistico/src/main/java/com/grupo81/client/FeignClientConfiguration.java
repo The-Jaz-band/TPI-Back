@@ -1,4 +1,4 @@
-package com.grupo81.servicio_logistico.client;
+package com.grupo81.client;
 
 import feign.RequestInterceptor;
 import org.springframework.context.annotation.Bean;

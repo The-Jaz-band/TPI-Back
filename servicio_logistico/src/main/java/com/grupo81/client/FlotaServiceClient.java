@@ -1,8 +1,8 @@
-package com.grupo81.servicio_logistico.client;
+package com.grupo81.client;
 
 import org.springframework.web.bind.annotation.*;
 
-import com.grupo81.servicio_logistico.client.dto.CamionDTO;
+import com.grupo81.client.dto.CamionDTO;
 
 import java.math.BigDecimal;
 import java.util.List;

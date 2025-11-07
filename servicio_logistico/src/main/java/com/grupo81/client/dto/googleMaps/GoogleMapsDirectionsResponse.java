@@ -1,4 +1,4 @@
-package com.grupo81.servicio_logistico.client.dto.googleMaps;
+package com.grupo81.client.dto.googleMaps;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.grupo81.servicio_logistico.dtos.solicitud.response;
+package com.grupo81.dtos.solicitud.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

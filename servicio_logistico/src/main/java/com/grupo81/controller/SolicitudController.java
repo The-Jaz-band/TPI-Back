@@ -1,10 +1,9 @@
-package com.grupo81.servicio_logistico.controller;
+package com.grupo81.controller;
 
-import com.grupo81.servicio_logistico.dtos.solicitud.*;
-import com.grupo81.servicio_logistico.dtos.solicitud.request.SolicitudCreateRequestDTO;
-import com.grupo81.servicio_logistico.dtos.solicitud.response.SolicitudResponseDTO;
-import com.grupo81.servicio_logistico.dtos.solicitud.response.SolicitudSeguimientoResponseDTO;
-import com.grupo81.servicio_logistico.services.SolicitudService;
+import com.grupo81.dtos.solicitud.request.SolicitudCreateRequestDTO;
+import com.grupo81.dtos.solicitud.response.SolicitudResponseDTO;
+import com.grupo81.dtos.solicitud.response.SolicitudSeguimientoResponseDTO;
+import com.grupo81.services.SolicitudService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

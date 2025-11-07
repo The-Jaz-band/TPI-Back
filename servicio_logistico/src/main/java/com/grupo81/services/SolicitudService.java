@@ -1,24 +1,24 @@
-package com.grupo81.servicio_logistico.services;
+package com.grupo81.services;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.grupo81.servicio_logistico.client.ClienteCreateDTO;
-import com.grupo81.servicio_logistico.client.ClienteDTO;
-import com.grupo81.servicio_logistico.client.ClienteServiceClient;
-import com.grupo81.servicio_logistico.dtos.solicitud.request.SolicitudCreateRequestDTO;
-import com.grupo81.servicio_logistico.dtos.solicitud.request.UbicacionDTO;
-import com.grupo81.servicio_logistico.dtos.solicitud.request.ClienteRequestDTO;
-import com.grupo81.servicio_logistico.dtos.solicitud.response.ContenedorResponseDTO;
-import com.grupo81.servicio_logistico.dtos.solicitud.response.ContenedorSeguimientoDTO;
-import com.grupo81.servicio_logistico.dtos.solicitud.response.SolicitudResponseDTO;
-import com.grupo81.servicio_logistico.dtos.solicitud.response.SolicitudSeguimientoResponseDTO;
-import com.grupo81.servicio_logistico.entity.Contenedor;
-import com.grupo81.servicio_logistico.entity.Solicitud;
-import com.grupo81.servicio_logistico.repository.ContenedorRepository;
-import com.grupo81.servicio_logistico.repository.SolicitudRepository;
+import com.grupo81.client.ClienteServiceClient;
+import com.grupo81.client.dto.ClienteCreateDTO;
+import com.grupo81.client.dto.ClienteDTO;
+import com.grupo81.dtos.solicitud.request.SolicitudCreateRequestDTO;
+import com.grupo81.dtos.solicitud.request.UbicacionDTO;
+import com.grupo81.dtos.solicitud.request.ClienteRequestDTO;
+import com.grupo81.dtos.solicitud.response.ContenedorResponseDTO;
+import com.grupo81.dtos.solicitud.response.ContenedorSeguimientoDTO;
+import com.grupo81.dtos.solicitud.response.SolicitudResponseDTO;
+import com.grupo81.dtos.solicitud.response.SolicitudSeguimientoResponseDTO;
+import com.grupo81.entity.Contenedor;
+import com.grupo81.entity.Solicitud;
+import com.grupo81.repository.ContenedorRepository;
+import com.grupo81.repository.SolicitudRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

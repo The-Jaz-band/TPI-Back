@@ -1,4 +1,4 @@
-package com.grupo81.servicio_logistico.config;
+package com.grupo81.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

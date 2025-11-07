@@ -1,4 +1,4 @@
-package com.grupo81.servicio_flota.controller;
+package com.grupo81.controller;
 
 import com.grupo81.servicio_flota.dtos.request.*;
 import com.grupo81.servicio_flota.dtos.response.*;

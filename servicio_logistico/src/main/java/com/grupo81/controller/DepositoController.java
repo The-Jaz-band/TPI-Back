@@ -1,10 +1,9 @@
-package com.grupo81.servicio_logistico.controller;
+package com.grupo81.controller;
 
-import com.grupo81.servicio_logistico.dtos.deposito.request.*;
-import com.grupo81.servicio_logistico.dtos.deposito.response.*;
-import com.grupo81.servicio_logistico.dtos.deposito.response.ContenedorEnDepositoResponseDTO;
-import com.grupo81.servicio_logistico.dtos.deposito.response.DepositoResponseDTO;
-import com.grupo81.servicio_logistico.services.DepositoService;
+import com.grupo81.dtos.deposito.request.*;
+import com.grupo81.dtos.deposito.response.ContenedorEnDepositoResponseDTO;
+import com.grupo81.dtos.deposito.response.DepositoResponseDTO;
+import com.grupo81.services.DepositoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

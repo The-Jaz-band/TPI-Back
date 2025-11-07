@@ -1,15 +1,15 @@
-package com.grupo81.servicio_logistico.services;
+package com.grupo81.services;
 
-import com.grupo81.servicio_logistico.client.*;
-import com.grupo81.servicio_logistico.client.dto.ConfiguracionTarifaDTO;
-import com.grupo81.servicio_logistico.client.dto.googleMaps.*;
-import com.grupo81.servicio_logistico.dtos.ruta.request.RutaAsignacionRequestDTO;
-import com.grupo81.servicio_logistico.dtos.ruta.response.RutaResponseDTO;
-import com.grupo81.servicio_logistico.dtos.ruta.response.RutaTentativaResponseDTO;
-import com.grupo81.servicio_logistico.dtos.ruta.response.TramoResponseDTO;
-import com.grupo81.servicio_logistico.dtos.ruta.response.TramoTentativoDTO;
-import com.grupo81.servicio_logistico.entity.*;
-import com.grupo81.servicio_logistico.repository.*;
+import com.grupo81.client.*;
+import com.grupo81.client.dto.ConfiguracionTarifaDTO;
+import com.grupo81.client.dto.googleMaps.*;
+import com.grupo81.dtos.ruta.request.RutaAsignacionRequestDTO;
+import com.grupo81.dtos.ruta.response.RutaResponseDTO;
+import com.grupo81.dtos.ruta.response.RutaTentativaResponseDTO;
+import com.grupo81.dtos.ruta.response.TramoResponseDTO;
+import com.grupo81.dtos.ruta.response.TramoTentativoDTO;
+import com.grupo81.entity.*;
+import com.grupo81.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

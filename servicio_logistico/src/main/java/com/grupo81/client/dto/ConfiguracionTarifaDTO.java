@@ -1,4 +1,4 @@
-package com.grupo81.servicio_logistico.client.dto;
+package com.grupo81.client.dto;
 
 import java.math.BigDecimal;
 

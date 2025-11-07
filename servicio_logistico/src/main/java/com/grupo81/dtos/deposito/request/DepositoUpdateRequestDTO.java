@@ -1,4 +1,4 @@
-package com.grupo81.servicio_logistico.dtos.deposito.request;
+package com.grupo81.dtos.deposito.request;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;

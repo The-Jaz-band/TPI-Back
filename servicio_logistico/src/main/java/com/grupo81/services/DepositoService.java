@@ -1,11 +1,10 @@
-package com.grupo81.servicio_logistico.services;
+package com.grupo81.services;
 
-import com.grupo81.servicio_logistico.dtos.deposito.request.*;
-import com.grupo81.servicio_logistico.dtos.deposito.response.*;
-import com.grupo81.servicio_logistico.dtos.deposito.response.ContenedorEnDepositoResponseDTO;
-import com.grupo81.servicio_logistico.dtos.deposito.response.DepositoResponseDTO;
-import com.grupo81.servicio_logistico.entity.*;
-import com.grupo81.servicio_logistico.repository.*;
+import com.grupo81.dtos.deposito.request.*;
+import com.grupo81.dtos.deposito.response.ContenedorEnDepositoResponseDTO;
+import com.grupo81.dtos.deposito.response.DepositoResponseDTO;
+import com.grupo81.entity.*;
+import com.grupo81.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

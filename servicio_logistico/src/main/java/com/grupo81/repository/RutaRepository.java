@@ -1,6 +1,6 @@
-package com.grupo81.servicio_logistico.repository;
+package com.grupo81.repository;
 
-import com.grupo81.servicio_logistico.entity.Ruta;
+import com.grupo81.entity.Ruta;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

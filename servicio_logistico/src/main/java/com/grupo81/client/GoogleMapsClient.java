@@ -1,9 +1,9 @@
-package com.grupo81.servicio_logistico.client;
+package com.grupo81.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-import com.grupo81.servicio_logistico.client.dto.googleMaps.*;
+import com.grupo81.client.dto.googleMaps.*;
 
 @FeignClient(
     name = "google-maps",
