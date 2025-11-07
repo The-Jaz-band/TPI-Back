@@ -2,27 +2,84 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" 
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     
-    <!-- CAMBIO 1: Apuntar al parent -->
+    <!-- 1. CONEXIÓN AL PADRE (FUNDAMENTAL) -->
+    <!-- Esto hereda Spring Boot, Spring Cloud, y otras configuraciones -->
     <parent>
         <groupId>com.grupo81</groupId>
         <artifactId>sistema-logistica-parent</artifactId>
         <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath> <!-- Le dice dónde encontrar al padre -->
     </parent>
     
-    <!-- CAMBIO 2: Solo artifactId (groupId y version se heredan) -->
     <artifactId>servicio_logistico</artifactId>
+    <name>servicio_logistico</name>
+    <description>Microservicio de gestión logística (traslados, depositos, etc.)</description>
     
-    <!-- CAMBIO 3: Eliminar <properties> duplicadas (se heredan) -->
-    
-    <!-- CAMBIO 4: Mantener solo las dependencies, eliminar dependencyManagement -->
     <dependencies>
-        <!-- ... tus dependencies actuales ... -->
+        <!-- DEPENDENCIAS BÁSICAS DE SPRING (Heredadas, pero las listamos) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- BASE DE DATOS (Visto en los errores) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- SEGURIDAD (Visto en los errores) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+
+        <!-- FEIGN CLIENT (Visto en los errores) -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <!-- OPENAPI/SWAGGER (Visto en los errores) -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+        
+        <!-- TESTING (Heredado del padre, pero H2 es necesario para los tests) -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     
-    <!-- CAMBIO 5: Build simplificado -->
+    <!-- Configuración para crear el JAR ejecutable -->
     <build>
         <plugins>
             <plugin>
@@ -31,4 +88,5 @@
             </plugin>
         </plugins>
     </build>
+    
 </project>
