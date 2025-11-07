@@ -1,5 +1,6 @@
 package com.grupo81.client;
 
+import org.springframework.cloud.openfeign.FeignClient;  // ← AGREGAR ESTE IMPORT
 import org.springframework.web.bind.annotation.*;
 
 import com.grupo81.client.dto.CamionDTO;
@@ -8,6 +9,11 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
+@FeignClient(
+    name = "servicio-flota",
+    url = "${microservices.flota.url}",
+    configuration = FeignClientConfiguration.class
+)
 public interface FlotaServiceClient {
     
     @GetMapping("/api/camiones/{id}")
@@ -25,17 +31,3 @@ public interface FlotaServiceClient {
         @RequestParam("disponible") boolean disponible
     );
 }
-
-// DTOs para Camión
-/*record CamionDTO(
-    UUID id,
-    String dominio,
-    String nombreTransportista,
-    String telefonoTransportista,
-    BigDecimal capacidadPesoKg,
-    BigDecimal capacidadVolumenM3,
-    BigDecimal costoBaseKm,
-    BigDecimal consumoCombustibleLKm,
-    boolean disponible
-) {}
-*/
