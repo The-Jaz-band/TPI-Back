@@ -1,122 +1,44 @@
 server:
-  port: 8081
+  port: 8081 # Puerto para el servicio_flota
 
 spring:
   application:
-    name: servicio-logistico
+    name: servicio_logistico
   
   datasource:
+    # Estos valores son para correr en tu PC local (fuera de Docker).
+    # Docker Compose los va a sobreescribir con "postgres-flota" al arrancar.
     url: jdbc:postgresql://localhost:5432/logistica_db
     username: back-admin
     password: admin123
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 30000
   
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-        jdbc:
-          batch_size: 20
-        order_inserts: true
-        order_updates: true
   
   security:
     oauth2:
       resourceserver:
         jwt:
+          # Docker Compose lo sobreescribe con "keycloak"
           issuer-uri: http://localhost:8080/realms/logistica-realm
-          jwk-set-uri: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/certs
+  
   profiles:
-    active: dev # Agregar esto temporalmente
+    active: dev
 
-# Configuración de Swagger/OpenAPI
+# --- ESTA ES LA PARTE IMPORTANTE ---
+# Configuración de Swagger UI conectada a Keycloak
 springdoc:
   api-docs:
     path: /api-docs
-    enabled: true
   swagger-ui:
     path: /swagger-ui.html
-    enabled: true
-    tags-sorter: alpha
-    operations-sorter: alpha
-    doc-expansion: none
-    filter: false
-
-# Configuración de logging
-logging:
-  level:
-    root: INFO
-    com.grupo81: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
-# URLs de otros microservicios (para desarrollo local)
-microservices:
-  clientes:
-    url: http://localhost:8082
-  flota:
-    url: http://localhost:8083
-  tarifas:
-    url: http://localhost:8084
-  google-maps:
-    api-key: ${GOOGLE_MAPS_API_KEY:AIzaSyDummy_Key_Para_Testing}
-    base-url: https://maps.googleapis.com/maps/api
-
-# Configuración de Resilience4j Circuit Breaker
-resilience4j:
-  circuitbreaker:
-    instances:
-      clientesService:
-        registerHealthIndicator: true
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5
-        permittedNumberOfCallsInHalfOpenState: 3
-        automaticTransitionFromOpenToHalfOpenEnabled: true
-        waitDurationInOpenState: 5s
-        failureRateThreshold: 50
-        eventConsumerBufferSize: 10
-      flotaService:
-        registerHealthIndicator: true
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5
-        waitDurationInOpenState: 5s
-        failureRateThreshold: 50
-      tarifaService:
-        registerHealthIndicator: true
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5
-        waitDurationInOpenState: 5s
-        failureRateThreshold: 50
-  retry:
-    instances:
-      clientesService:
-        maxAttempts: 3
-        waitDuration: 1s
-      flotaService:
-        maxAttempts: 3
-        waitDuration: 1s
-      tarifaService:
-        maxAttempts: 3
-        waitDuration: 1s
-
-# Actuator endpoints
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics
-  endpoint:
-    health:
-      show-details: always
+    oauth:
+      client-id: tpi-backend-client
+      use-pkce-with-authorization-code-grant: true
+      # ESTO ES CLAVE: No incluir client-secret
+    oauth2-redirect-url: http://localhost:8081/swagger-ui/oauth2-redirect.html
+  oauth2:
+    authorization-url: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/auth
+    token-url: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/token

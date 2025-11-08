@@ -1,11 +1,13 @@
 server:
-  port: 8084
+  port: 8084 
 
 spring:
   application:
     name: servicio_tarifa
   
   datasource:
+    # Estos valores son para correr en tu PC local (fuera de Docker).
+    # Docker Compose los va a sobreescribir con "postgres-flota" al arrancar.
     url: jdbc:postgresql://localhost:5432/tarifa_db
     username: back-admin
     password: admin123
@@ -19,12 +21,24 @@ spring:
     oauth2:
       resourceserver:
         jwt:
+          # Docker Compose lo sobreescribe con "keycloak"
           issuer-uri: http://localhost:8080/realms/logistica-realm
+  
   profiles:
-    active: dev # Agregar esto temporalmente
+    active: dev
 
+# --- ESTA ES LA PARTE IMPORTANTE ---
+# Configuración de Swagger UI conectada a Keycloak
 springdoc:
   api-docs:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
+    oauth:
+      client-id: tpi-backend-client
+      use-pkce-with-authorization-code-grant: true
+      # ESTO ES CLAVE: No incluir client-secret
+    oauth2-redirect-url: http://localhost:8084/swagger-ui/oauth2-redirect.html
+  oauth2:
+    authorization-url: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/auth
+    token-url: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/token

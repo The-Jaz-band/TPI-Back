@@ -1,11 +1,15 @@
 server:
-  port: 8082
+  port: 8082 # Puerto para el servicio_cliente
 
 spring:
   application:
     name: servicio_cliente
   
   datasource:
+    # Estos valores de localhost son para cuando corrés el
+    # servicio en tu PC local (fuera de Docker).
+    # ¡Está bien! Docker Compose los va a sobreescribir 
+    # con los correctos ("postgres-cliente") al arrancar.
     url: jdbc:postgresql://localhost:5432/cliente_db
     username: back-admin
     password: admin123
@@ -19,12 +23,25 @@ spring:
     oauth2:
       resourceserver:
         jwt:
+          # ¡Igual que la base de datos!
+          # Docker Compose lo va a sobreescribir con "keycloak"
           issuer-uri: http://localhost:8080/realms/logistica-realm
+  
   profiles:
-    active: dev # Agregar esto temporalmente
+    active: dev
 
+# --- ESTA ES LA PARTE IMPORTANTE ---
+# Combina tu 'springdoc' existente con la configuración de OAuth2
 springdoc:
   api-docs:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
+    oauth:
+      client-id: tpi-backend-client
+      use-pkce-with-authorization-code-grant: true
+      # ESTO ES CLAVE: No incluir client-secret
+    oauth2-redirect-url: http://localhost:8082/swagger-ui/oauth2-redirect.html
+  oauth2:
+    authorization-url: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/auth
+    token-url: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/token

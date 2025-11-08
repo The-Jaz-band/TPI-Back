@@ -1,10 +1,10 @@
-package com.grupo81.servicio_logistico;
+package utnfc.isi.back.spring.geoapi;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ServicioTarifaApplicationTests {
+class GeoapiApplicationTests {
 
 	@Test
 	void contextLoads() {

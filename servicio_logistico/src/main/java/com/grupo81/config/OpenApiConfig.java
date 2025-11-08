@@ -2,36 +2,40 @@ package com.grupo81.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.OAuthFlow;
+import io.swagger.v3.oas.models.security.OAuthFlows;
+import io.swagger.v3.oas.models.security.Scopes;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class OpenApiConfig {
     
+    @Value("${springdoc.swagger-ui.oauth.authorization-url:${springdoc.oauth2.authorization-url}}")
+    private String authorizationUrl;
+    
+    @Value("${springdoc.swagger-ui.oauth.token-url:${springdoc.oauth2.token-url}}")
+    private String tokenUrl;
+    
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
             .info(new Info()
-                .title("API Servicio Logística")
+                .title("API Servicio Logistica")
                 .version("1.0.0")
-                .description("API REST para la gestión de logística de transporte de contenedores")
-                .contact(new Contact()
-                    .name("Grupo 81")
-                    .email("grupo81@example.com"))
-                .license(new License()
-                    .name("Apache 2.0")
-                    .url("https://www.apache.org/licenses/LICENSE-2.0.html")))
-            .addSecurityItem(new SecurityRequirement().addList("bearer-jwt"))
+                .description("API REST para la gestión de logistica"))
+            .addSecurityItem(new SecurityRequirement().addList("oauth2"))
             .components(new Components()
-                .addSecuritySchemes("bearer-jwt", new SecurityScheme()
-                    .type(SecurityScheme.Type.HTTP)
-                    .scheme("bearer")
-                    .bearerFormat("JWT")
-                    .description("Ingrese el token JWT obtenido de Keycloak")));
+                .addSecuritySchemes("oauth2", new SecurityScheme()
+                    .type(SecurityScheme.Type.OAUTH2)
+                    .flows(new OAuthFlows()
+                        .authorizationCode(new OAuthFlow()
+                            .authorizationUrl(authorizationUrl)
+                            .tokenUrl(tokenUrl)
+                            .scopes(new Scopes())))));
     }
 }
