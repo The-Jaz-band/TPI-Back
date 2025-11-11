@@ -26,6 +26,7 @@
         <module>servicio_cliente</module>
         <module>servicio_flota</module>
         <module>servicio_tarifa</module>
+        <module>_geoapi</module>
     </modules>
     
     <properties>

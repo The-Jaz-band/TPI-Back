@@ -1,8 +1,9 @@
 package com.grupo81.services;
 
-import com.grupo81.client.*;
+import com.grupo81.client.GeoApiClient;
+import com.grupo81.client.TarifaServiceClient;
 import com.grupo81.client.dto.ConfiguracionTarifaDTO;
-import com.grupo81.client.dto.googleMaps.*;
+import com.grupo81.client.dto.geoapi.DistanciaDTO;
 import com.grupo81.dtos.ruta.request.RutaAsignacionRequestDTO;
 import com.grupo81.dtos.ruta.response.RutaResponseDTO;
 import com.grupo81.dtos.ruta.response.RutaTentativaResponseDTO;
@@ -12,12 +13,12 @@ import com.grupo81.entity.*;
 import com.grupo81.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -32,17 +33,12 @@ public class RutaService {
     private final TramoRepository tramoRepository;
     private final SolicitudRepository solicitudRepository;
     private final DepositoRepository depositoRepository;
-    private final GoogleMapsClient googleMapsClient;
+    private final GeoApiClient geoApiClient;  // ✅ Usar GeoAPI en vez de Google Maps directo
     private final TarifaServiceClient tarifaServiceClient;
-    
-    @Value("${microservices.google-maps.api-key}")
-    private String googleMapsApiKey;
-    
-    private static final BigDecimal VELOCIDAD_PROMEDIO_KMH = new BigDecimal("60"); // 60 km/h promedio
     
     @Transactional(readOnly = true)
     public RutaTentativaResponseDTO calcularRutaTentativa(UUID solicitudId, List<UUID> depositosIds) {
-        log.info("Calculando ruta tentativa para solicitud: {}", solicitudId);
+        log.info("🚀 Calculando ruta tentativa para solicitud: {}", solicitudId);
         
         Solicitud solicitud = solicitudRepository.findById(solicitudId)
             .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
@@ -142,6 +138,8 @@ public class RutaService {
         BigDecimal costoGestion = configuracion.costoGestionPorTramo().multiply(new BigDecimal(tramos.size()));
         costoTotal = costoTotal.add(costoGestion);
         
+        log.info("✅ Ruta tentativa calculada: {} tramos, {} km, ${}", tramos.size(), distanciaTotal, costoTotal);
+        
         return RutaTentativaResponseDTO.builder()
             .solicitudId(solicitudId)
             .tramos(tramos)
@@ -162,19 +160,23 @@ public class RutaService {
             ConfiguracionTarifaDTO configuracion,
             Deposito deposito) {
         
-        // Obtener distancia de Google Maps
-        BigDecimal distanciaKm = obtenerDistancia(origenCoord, destinoCoord);
+        log.info("📍 Calculando tramo {} ({} → {})", orden, origenDireccion, destinoDireccion);
         
-        // Calcular tiempo estimado
-        BigDecimal tiempoHoras = distanciaKm.divide(VELOCIDAD_PROMEDIO_KMH, 2, RoundingMode.HALF_UP);
+        // ✅ Obtener distancia de GeoAPI
+        BigDecimal distanciaKm = obtenerDistanciaGeoAPI(origenCoord, destinoCoord);
         
-        // Calcular costo
+        // Calcular tiempo estimado en horas
+        BigDecimal tiempoHoras = BigDecimal.valueOf(distanciaKm.doubleValue() / 60.0); // Asumiendo 60 km/h promedio
+        
+        // Calcular costos
         BigDecimal costoTraslado = configuracion.costoBaseKm().multiply(distanciaKm);
         BigDecimal costoCombustible = configuracion.consumoPromedioLKm()
             .multiply(distanciaKm)
             .multiply(configuracion.valorLitroCombustible());
         
         BigDecimal costoTotal = costoTraslado.add(costoCombustible);
+        
+        log.info("   💰 Distancia: {} km | Costo: ${}", distanciaKm, costoTotal);
         
         return TramoTentativoDTO.builder()
             .orden(orden)
@@ -191,7 +193,7 @@ public class RutaService {
     
     @Transactional
     public RutaResponseDTO asignarRuta(RutaAsignacionRequestDTO request) {
-        log.info("Asignando ruta a solicitud: {}", request.getSolicitudId());
+        log.info("🚀 Asignando ruta a solicitud: {}", request.getSolicitudId());
         
         Solicitud solicitud = solicitudRepository.findById(request.getSolicitudId())
             .orElseThrow(() -> new IllegalArgumentException("Solicitud no encontrada"));
@@ -214,12 +216,18 @@ public class RutaService {
             .build();
         
         ruta = rutaRepository.save(ruta);
+        log.info("✅ Ruta creada con ID: {}", ruta.getId());
         
         // Crear tramos
+        LocalDateTime fechaEstimadaInicio = LocalDateTime.now().plusHours(1); // Inicia en 1 hora
+        
         for (TramoTentativoDTO tramoTentativo : rutaTentativa.getTramos()) {
-            Tramo tramo = crearTramoDesdeDTO(tramoTentativo, ruta, solicitud);
+            Tramo tramo = crearTramoDesdeDTO(tramoTentativo, ruta, solicitud, fechaEstimadaInicio);
             ruta.addTramo(tramo);
             tramoRepository.save(tramo);
+            
+            // Siguiente tramo inicia cuando termina el anterior
+            fechaEstimadaInicio = tramo.getFechaHoraEstimadaFin();
         }
         
         // Actualizar solicitud
@@ -228,14 +236,23 @@ public class RutaService {
         solicitud.setTiempoEstimadoHoras(rutaTentativa.getTiempoEstimadoTotalHoras());
         solicitudRepository.save(solicitud);
         
-        log.info("Ruta asignada exitosamente con ID: {}", ruta.getId());
+        log.info("✅ Ruta asignada exitosamente con {} tramos", ruta.getCantidadTramos());
         
         return mapToResponseDTO(ruta);
     }
     
-    private Tramo crearTramoDesdeDTO(TramoTentativoDTO dto, Ruta ruta, Solicitud solicitud) {
-        BigDecimal[] origenCoords = extraerCoordenadas(dto.getOrigenDireccion(), solicitud, true, dto.getOrden() - 1);
-        BigDecimal[] destinoCoords = extraerCoordenadas(dto.getDestinoDireccion(), solicitud, false, dto.getOrden() - 1);
+    private Tramo crearTramoDesdeDTO(TramoTentativoDTO dto, Ruta ruta, Solicitud solicitud, LocalDateTime fechaInicio) {
+        // ✅ Extraer coordenadas correctamente
+        BigDecimal[] origenCoords = extraerCoordenadas(dto.getOrigenDireccion(), solicitud, dto.getDepositoId(), true);
+        BigDecimal[] destinoCoords = extraerCoordenadas(dto.getDestinoDireccion(), solicitud, dto.getDepositoId(), false);
+        
+        // ✅ Calcular fechas estimadas
+        long horasEstimadas = dto.getTiempoEstimadoHoras().longValue();
+        long minutosEstimados = dto.getTiempoEstimadoHoras()
+            .subtract(new BigDecimal(horasEstimadas))
+            .multiply(new BigDecimal("60")).longValue();
+        
+        LocalDateTime estimadoFin = fechaInicio.plusHours(horasEstimadas).plusMinutes(minutosEstimados);
         
         return Tramo.builder()
             .ruta(ruta)
@@ -250,38 +267,56 @@ public class RutaService {
             .destinoLongitud(destinoCoords[1])
             .distanciaKm(dto.getDistanciaKm())
             .costoAproximado(dto.getCostoEstimado())
+            .fechaHoraEstimadaInicio(fechaInicio)       // ✅ Agregado
+            .fechaHoraEstimadaFin(estimadoFin)          // ✅ Agregado
             .deposito(dto.getDepositoId() != null ? 
                 depositoRepository.findById(dto.getDepositoId()).orElse(null) : null)
             .build();
     }
     
-    private BigDecimal[] extraerCoordenadas(String direccion, Solicitud solicitud, boolean esOrigen, int orden) {
-        // Lógica simplificada - en producción debería ser más robusta
-        if (esOrigen && orden == 0) {
+    /**
+     * ✅ Método corregido para extraer coordenadas
+     */
+    private BigDecimal[] extraerCoordenadas(String direccion, Solicitud solicitud, UUID depositoId, boolean esOrigen) {
+        // Si es el origen de la solicitud
+        if (direccion.equals(solicitud.getOrigenDireccion())) {
             return new BigDecimal[]{solicitud.getOrigenLatitud(), solicitud.getOrigenLongitud()};
-        } else if (!esOrigen && direccion.equals(solicitud.getDestinoDireccion())) {
-            return new BigDecimal[]{solicitud.getDestinoLatitud(), solicitud.getDestinoLongitud()};
-        }
-        // Para depósitos, buscar en la base de datos
-        return new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO};
-    }
-    
-    private BigDecimal obtenerDistancia(String origen, String destino) {
-        try {
-            GoogleMapsDirectionsResponse response = googleMapsClient.obtenerDirecciones(
-                origen, destino, googleMapsApiKey
-            );
-            
-            if ("OK".equals(response.status()) && !response.routes().isEmpty()) {
-                Long distanciaMetros = response.routes().get(0).legs().get(0).distance().value();
-                return new BigDecimal(distanciaMetros).divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
-            }
-        } catch (Exception e) {
-            log.error("Error al obtener distancia de Google Maps", e);
         }
         
-        // Fallback: calcular distancia euclidiana aproximada
-        return new BigDecimal("100"); // Valor por defecto
+        // Si es el destino de la solicitud
+        if (direccion.equals(solicitud.getDestinoDireccion())) {
+            return new BigDecimal[]{solicitud.getDestinoLatitud(), solicitud.getDestinoLongitud()};
+        }
+        
+        // Si es un depósito
+        if (depositoId != null) {
+            Deposito deposito = depositoRepository.findById(depositoId)
+                .orElseThrow(() -> new IllegalArgumentException("Depósito no encontrado: " + depositoId));
+            return new BigDecimal[]{deposito.getLatitud(), deposito.getLongitud()};
+        }
+        
+        throw new IllegalStateException("No se pudieron determinar las coordenadas para: " + direccion);
+    }
+    
+    /**
+     * ✅ Método para obtener distancia usando GeoAPI
+     */
+    private BigDecimal obtenerDistanciaGeoAPI(String origen, String destino) {
+        log.info("🗺️  Consultando GeoAPI: {} → {}", origen, destino);
+        
+        try {
+            DistanciaDTO distancia = geoApiClient.calcularDistancia(origen, destino);
+            BigDecimal distanciaKm = BigDecimal.valueOf(distancia.getKilometros())
+                .setScale(2, RoundingMode.HALF_UP);
+            
+            log.info("✅ Distancia real obtenida de GeoAPI: {} km", distanciaKm);
+            return distanciaKm;
+            
+        } catch (Exception e) {
+            log.error("❌ Error al consultar GeoAPI: {}", e.getMessage(), e);
+            log.warn("⚠️  Usando distancia estimada de 100 km (fallback)");
+            return new BigDecimal("100");
+        }
     }
     
     private String formatearCoordenadas(BigDecimal latitud, BigDecimal longitud) {

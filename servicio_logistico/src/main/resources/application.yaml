@@ -37,7 +37,8 @@ spring:
   profiles:
     active: prod # Para prueba usar dev
 
-# Configuración de Swagger/OpenAPI
+# --- ESTA ES LA PARTE IMPORTANTE ---
+# Configuración de Swagger UI conectada a Keycloak
 springdoc:
   api-docs:
     path: /api-docs
