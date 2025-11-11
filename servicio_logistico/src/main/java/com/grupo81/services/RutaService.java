@@ -2,7 +2,8 @@ package com.grupo81.services;
 
 import com.grupo81.client.*;
 import com.grupo81.client.dto.ConfiguracionTarifaDTO;
-import com.grupo81.client.dto.googleMaps.*;
+import com.grupo81.client.dto.openrouteservice.OrsDirectionsResponse;
+import com.grupo81.client.dto.openrouteservice.OrsSummary;
 import com.grupo81.dtos.ruta.request.RutaAsignacionRequestDTO;
 import com.grupo81.dtos.ruta.response.RutaResponseDTO;
 import com.grupo81.dtos.ruta.response.RutaTentativaResponseDTO;
@@ -18,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration; // <-- Importante
+import java.time.LocalDateTime; // <-- Importante
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -32,13 +35,14 @@ public class RutaService {
     private final TramoRepository tramoRepository;
     private final SolicitudRepository solicitudRepository;
     private final DepositoRepository depositoRepository;
-    private final GoogleMapsClient googleMapsClient;
+    
+    private final OpenRouteServiceClient openRouteServiceClient; 
     private final TarifaServiceClient tarifaServiceClient;
     
-    @Value("${microservices.google-maps.api-key}")
-    private String googleMapsApiKey;
+    @Value("${microservices.openrouteservice.api-key}")
+    private String orsApiKey;
     
-    private static final BigDecimal VELOCIDAD_PROMEDIO_KMH = new BigDecimal("60"); // 60 km/h promedio
+    private record InfoRuta(BigDecimal distanciaKm, BigDecimal duracionHoras) {}
     
     @Transactional(readOnly = true)
     public RutaTentativaResponseDTO calcularRutaTentativa(UUID solicitudId, List<UUID> depositosIds) {
@@ -59,11 +63,9 @@ public class RutaService {
         
         ConfiguracionTarifaDTO configuracion = tarifaServiceClient.obtenerConfiguracion();
         
-        // Crear tramos
         String origenActual = formatearCoordenadas(solicitud.getOrigenLatitud(), solicitud.getOrigenLongitud());
         int orden = 1;
         
-        // Primer tramo: origen a primer depósito
         if (!depositos.isEmpty()) {
             Deposito primerDeposito = depositos.get(0);
             String destinoDeposito = formatearCoordenadas(primerDeposito.getLatitud(), primerDeposito.getLongitud());
@@ -88,7 +90,6 @@ public class RutaService {
             origenActual = destinoDeposito;
         }
         
-        // Tramos entre depósitos
         for (int i = 0; i < depositos.size() - 1; i++) {
             Deposito origenDep = depositos.get(i);
             Deposito destinoDep = depositos.get(i + 1);
@@ -116,7 +117,6 @@ public class RutaService {
             origenActual = destino;
         }
         
-        // Último tramo: último depósito (o origen) a destino
         String destinoFinal = formatearCoordenadas(solicitud.getDestinoLatitud(), solicitud.getDestinoLongitud());
         Tramo.TipoTramo tipoUltimoTramo = depositos.isEmpty() ? 
             Tramo.TipoTramo.ORIGEN_DESTINO : Tramo.TipoTramo.DEPOSITO_DESTINO;
@@ -138,7 +138,6 @@ public class RutaService {
         tiempoTotal = tiempoTotal.add(ultimoTramo.getTiempoEstimadoHoras());
         distanciaTotal = distanciaTotal.add(ultimoTramo.getDistanciaKm());
         
-        // Agregar costo de gestión
         BigDecimal costoGestion = configuracion.costoGestionPorTramo().multiply(new BigDecimal(tramos.size()));
         costoTotal = costoTotal.add(costoGestion);
         
@@ -162,13 +161,11 @@ public class RutaService {
             ConfiguracionTarifaDTO configuracion,
             Deposito deposito) {
         
-        // Obtener distancia de Google Maps
-        BigDecimal distanciaKm = obtenerDistancia(origenCoord, destinoCoord);
+        InfoRuta infoRuta = obtenerInfoRuta(origenCoord, destinoCoord);
         
-        // Calcular tiempo estimado
-        BigDecimal tiempoHoras = distanciaKm.divide(VELOCIDAD_PROMEDIO_KMH, 2, RoundingMode.HALF_UP);
+        BigDecimal distanciaKm = infoRuta.distanciaKm();
+        BigDecimal tiempoHoras = infoRuta.duracionHoras();
         
-        // Calcular costo
         BigDecimal costoTraslado = configuracion.costoBaseKm().multiply(distanciaKm);
         BigDecimal costoCombustible = configuracion.consumoPromedioLKm()
             .multiply(distanciaKm)
@@ -189,6 +186,7 @@ public class RutaService {
             .build();
     }
     
+    // --- MÉTODO ACTUALIZADO ---
     @Transactional
     public RutaResponseDTO asignarRuta(RutaAsignacionRequestDTO request) {
         log.info("Asignando ruta a solicitud: {}", request.getSolicitudId());
@@ -200,13 +198,13 @@ public class RutaService {
             throw new IllegalStateException("La solicitud ya tiene una ruta asignada");
         }
         
-        // Calcular ruta tentativa
+        // 1. Calcular ruta tentativa (como antes)
         RutaTentativaResponseDTO rutaTentativa = calcularRutaTentativa(
             request.getSolicitudId(), 
             request.getDepositosIds()
         );
         
-        // Crear ruta definitiva
+        // 2. Crear ruta definitiva
         Ruta ruta = Ruta.builder()
             .solicitud(solicitud)
             .cantidadTramos(rutaTentativa.getTramos().size())
@@ -215,14 +213,54 @@ public class RutaService {
         
         ruta = rutaRepository.save(ruta);
         
-        // Crear tramos
-        for (TramoTentativoDTO tramoTentativo : rutaTentativa.getTramos()) {
-            Tramo tramo = crearTramoDesdeDTO(tramoTentativo, ruta, solicitud);
+        // --- INICIO DE LA LÓGICA DE FECHAS ---
+        // 3. Inicializar la fecha de inicio estimada para el primer tramo
+        LocalDateTime proximaFechaEstimadaInicio = LocalDateTime.now();
+        
+        for (TramoTentativoDTO dto : rutaTentativa.getTramos()) {
+            
+            // 4. Calcular la duración estimada en minutos
+            BigDecimal tiempoHoras = dto.getTiempoEstimadoHoras();
+            long totalMinutos = tiempoHoras.multiply(new BigDecimal("60")).longValue();
+            Duration duracionEstimada = Duration.ofMinutes(totalMinutos);
+            
+            // 5. Calcular las fechas estimadas para este tramo
+            LocalDateTime fechaEstimadaInicio = proximaFechaEstimadaInicio;
+            LocalDateTime fechaEstimadaFin = fechaEstimadaInicio.plus(duracionEstimada);
+            
+            // 6. Extraer coordenadas (lógica de 'crearTramoDesdeDTO' de antes)
+            BigDecimal[] origenCoords = extraerCoordenadas(dto.getOrigenDireccion(), solicitud, true, dto.getOrden() - 1);
+            BigDecimal[] destinoCoords = extraerCoordenadas(dto.getDestinoDireccion(), solicitud, false, dto.getOrden() - 1);
+            
+            // 7. Construir el Tramo con las fechas estimadas
+            Tramo tramo = Tramo.builder()
+                .ruta(ruta)
+                .orden(dto.getOrden())
+                .tipo(Tramo.TipoTramo.valueOf(dto.getTipo()))
+                .estado(Tramo.EstadoTramo.ESTIMADO)
+                .origenDireccion(dto.getOrigenDireccion())
+                .origenLatitud(origenCoords[0])
+                .origenLongitud(origenCoords[1])
+                .destinoDireccion(dto.getDestinoDireccion())
+                .destinoLatitud(destinoCoords[0])
+                .destinoLongitud(destinoCoords[1])
+                .distanciaKm(dto.getDistanciaKm())
+                .costoAproximado(dto.getCostoEstimado())
+                .deposito(dto.getDepositoId() != null ? 
+                    depositoRepository.findById(dto.getDepositoId()).orElse(null) : null)
+                // --- CAMPOS NUEVOS ASIGNADOS ---
+                .fechaHoraEstimadaInicio(fechaEstimadaInicio)
+                .fechaHoraEstimadaFin(fechaEstimadaFin)
+                .build();
+            
             ruta.addTramo(tramo);
             tramoRepository.save(tramo);
+            
+            // 8. La fecha de inicio del próximo tramo es el fin de este
+            proximaFechaEstimadaInicio = fechaEstimadaFin; 
         }
         
-        // Actualizar solicitud
+        // 9. Actualizar solicitud
         solicitud.setEstado(Solicitud.EstadoSolicitud.PROGRAMADA);
         solicitud.setCostoEstimado(rutaTentativa.getCostoEstimadoTotal());
         solicitud.setTiempoEstimadoHoras(rutaTentativa.getTiempoEstimadoTotalHoras());
@@ -233,59 +271,59 @@ public class RutaService {
         return mapToResponseDTO(ruta);
     }
     
-    private Tramo crearTramoDesdeDTO(TramoTentativoDTO dto, Ruta ruta, Solicitud solicitud) {
-        BigDecimal[] origenCoords = extraerCoordenadas(dto.getOrigenDireccion(), solicitud, true, dto.getOrden() - 1);
-        BigDecimal[] destinoCoords = extraerCoordenadas(dto.getDestinoDireccion(), solicitud, false, dto.getOrden() - 1);
-        
-        return Tramo.builder()
-            .ruta(ruta)
-            .orden(dto.getOrden())
-            .tipo(Tramo.TipoTramo.valueOf(dto.getTipo()))
-            .estado(Tramo.EstadoTramo.ESTIMADO)
-            .origenDireccion(dto.getOrigenDireccion())
-            .origenLatitud(origenCoords[0])
-            .origenLongitud(origenCoords[1])
-            .destinoDireccion(dto.getDestinoDireccion())
-            .destinoLatitud(destinoCoords[0])
-            .destinoLongitud(destinoCoords[1])
-            .distanciaKm(dto.getDistanciaKm())
-            .costoAproximado(dto.getCostoEstimado())
-            .deposito(dto.getDepositoId() != null ? 
-                depositoRepository.findById(dto.getDepositoId()).orElse(null) : null)
-            .build();
-    }
+    // --- MÉTODO ELIMINADO ---
+    // private Tramo crearTramoDesdeDTO(...) { ... }
+    
     
     private BigDecimal[] extraerCoordenadas(String direccion, Solicitud solicitud, boolean esOrigen, int orden) {
-        // Lógica simplificada - en producción debería ser más robusta
         if (esOrigen && orden == 0) {
             return new BigDecimal[]{solicitud.getOrigenLatitud(), solicitud.getOrigenLongitud()};
-        } else if (!esOrigen && direccion.equals(solicitud.getDestinoDireccion())) {
+        }
+        
+        if (!esOrigen && direccion.equals(solicitud.getDestinoDireccion())) {
             return new BigDecimal[]{solicitud.getDestinoLatitud(), solicitud.getDestinoLongitud()};
         }
-        // Para depósitos, buscar en la base de datos
+        
+        Deposito dep = depositoRepository.findByDireccionAndActivoTrue(direccion).orElse(null);
+        if (dep != null) {
+            return new BigDecimal[]{dep.getLatitud(), dep.getLongitud()};
+        }
+
+        log.warn("No se pudieron extraer coordenadas para la dirección: {}. Usando (0,0)", direccion);
         return new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO};
     }
     
-    private BigDecimal obtenerDistancia(String origen, String destino) {
+    private InfoRuta obtenerInfoRuta(String origen, String destino) {
         try {
-            GoogleMapsDirectionsResponse response = googleMapsClient.obtenerDirecciones(
-                origen, destino, googleMapsApiKey
+            log.debug("Llamando a ORS: {} -> {}", origen, destino);
+            OrsDirectionsResponse response = openRouteServiceClient.obtenerDirecciones(
+                orsApiKey, origen, destino
             );
             
-            if ("OK".equals(response.status()) && !response.routes().isEmpty()) {
-                Long distanciaMetros = response.routes().get(0).legs().get(0).distance().value();
-                return new BigDecimal(distanciaMetros).divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
+            if (response != null && response.features() != null && !response.features().isEmpty()) {
+                OrsSummary summary = response.features().get(0).properties().summary();
+                
+                BigDecimal distanciaKm = new BigDecimal(summary.distance())
+                    .divide(new BigDecimal("1000"), 2, RoundingMode.HALF_UP);
+                
+                BigDecimal duracionHoras = new BigDecimal(summary.duration())
+                    .divide(new BigDecimal("3600"), 2, RoundingMode.HALF_UP);
+                
+                log.info("Ruta calculada por ORS: {} km, {} horas", distanciaKm, duracionHoras);
+                return new InfoRuta(distanciaKm, duracionHoras);
             }
         } catch (Exception e) {
-            log.error("Error al obtener distancia de Google Maps", e);
+            log.error("Error al obtener ruta de OpenRouteService: {}", e.getMessage(), e);
         }
         
-        // Fallback: calcular distancia euclidiana aproximada
-        return new BigDecimal("100"); // Valor por defecto
+        log.warn("Usando valores de fallback para ruta: 100km, 1.67h");
+        BigDecimal fallbackDistancia = new BigDecimal("100.00");
+        BigDecimal fallbackHoras = new BigDecimal("1.67");
+        return new InfoRuta(fallbackDistancia, fallbackHoras);
     }
     
     private String formatearCoordenadas(BigDecimal latitud, BigDecimal longitud) {
-        return latitud.toString() + "," + longitud.toString();
+        return longitud.toString() + "," + latitud.toString();
     }
     
     private RutaResponseDTO mapToResponseDTO(Ruta ruta) {
@@ -316,8 +354,8 @@ public class RutaService {
             .distanciaKm(tramo.getDistanciaKm())
             .costoAproximado(tramo.getCostoAproximado())
             .costoReal(tramo.getCostoReal())
-            .fechaHoraEstimadaInicio(tramo.getFechaHoraEstimadaInicio())
-            .fechaHoraEstimadaFin(tramo.getFechaHoraEstimadaFin())
+            .fechaHoraEstimadaInicio(tramo.getFechaHoraEstimadaInicio()) // <-- Ahora tendrán valor
+            .fechaHoraEstimadaFin(tramo.getFechaHoraEstimadaFin())       // <-- Ahora tendrán valor
             .fechaHoraInicio(tramo.getFechaHoraInicio())
             .fechaHoraFin(tramo.getFechaHoraFin())
             .camionId(tramo.getCamionId())

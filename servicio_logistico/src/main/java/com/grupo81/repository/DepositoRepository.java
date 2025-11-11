@@ -13,4 +13,7 @@ public interface DepositoRepository extends JpaRepository<Deposito, UUID> {
     List<Deposito> findByActivoTrue();
     Optional<Deposito> findByIdAndActivoTrue(UUID id);
     boolean existsByNombreAndActivoTrue(String nombre);
+
+    // Busca un depósito por su dirección exacta, siempre que esté activo
+    Optional<Deposito> findByDireccionAndActivoTrue(String direccion);
 }

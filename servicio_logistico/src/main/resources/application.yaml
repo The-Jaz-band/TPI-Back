@@ -1,13 +1,11 @@
 server:
-  port: 8081 # Puerto para el servicio_flota
+  port: 8081 # Puerto para el servicio_logistico
 
 spring:
   application:
     name: servicio_logistico
   
   datasource:
-    # Estos valores son para correr en tu PC local (fuera de Docker).
-    # Docker Compose los va a sobreescribir con "postgres-flota" al arrancar.
     url: jdbc:postgresql://localhost:5432/logistica_db
     username: back-admin
     password: admin123
@@ -21,14 +19,18 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          # Docker Compose lo sobreescribe con "keycloak"
           issuer-uri: http://localhost:8080/realms/logistica-realm
   
   profiles:
     active: dev
 
-# --- ESTA ES LA PARTE IMPORTANTE ---
-# Configuración de Swagger UI conectada a Keycloak
+# --- CONFIGURACIÓN DE MICROSERVICIOS ---
+microservices:
+  openrouteservice:
+    base-url: "https://api.openrouteservice.org"
+    api-key: "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjkxMzMyZmRjYzYzODRkMDliODRhN2VmM2Q2MTI2NDljIiwiaCI6Im11cm11cjY0In0="
+
+# Configuración de Swagger UI
 springdoc:
   api-docs:
     path: /api-docs
@@ -37,7 +39,6 @@ springdoc:
     oauth:
       client-id: tpi-backend-client
       use-pkce-with-authorization-code-grant: true
-      # ESTO ES CLAVE: No incluir client-secret
     oauth2-redirect-url: http://localhost:8081/swagger-ui/oauth2-redirect.html
   oauth2:
     authorization-url: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/auth
