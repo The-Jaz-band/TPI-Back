@@ -1,0 +1,26 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: servicio-geoapi
+
+# Configuración de Swagger/OpenAPI
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+# API Key de Google Maps
+google:
+  maps:
+    apikey: AIzaSyC7Aazi7xB5Q2rugPc9u9UhxqeRIW9wpzU
+
+# Logging para debug
+logging:
+  level:
+    root: INFO
+    utnfc.isi.back.spring.geoapi: DEBUG
+    org.springframework.web: DEBUG
