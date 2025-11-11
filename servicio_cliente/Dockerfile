@@ -1,36 +1,35 @@
-# Etapa 1: Construir TODO el proyecto
+# Plantilla de Dockerfile para servicio-logistica
 FROM maven:3.9.6-eclipse-temurin-21 as builder
 WORKDIR /app
 
-# Copiar el POM padre
+# 1. Copiar el POM padre
 COPY pom.xml .
 
-# Copiar los POMs de los módulos
+# 2. Copiar los POMs de TODOS los módulos
 COPY servicio_cliente/pom.xml ./servicio_cliente/
 COPY servicio_flota/pom.xml ./servicio_flota/
 COPY servicio_logistico/pom.xml ./servicio_logistico/
 COPY servicio_tarifa/pom.xml ./servicio_tarifa/
+COPY api-gateway/pom.xml ./api-gateway/
 
-# Descargar dependencias para todo el proyecto
+# 3. Descargar dependencias (basado en los POMs)
 RUN mvn dependency:go-offline -B
 
-# Copiar el código fuente de todo el proyecto
-# ¡LÍNEA BORRADA! No hay 'src' en la raíz.
+# 4. Copiar el CÓDIGO FUENTE de TODOS los módulos
 COPY servicio_cliente/src ./servicio_cliente/src
 COPY servicio_flota/src ./servicio_flota/src
 COPY servicio_logistico/src ./servicio_logistico/src
 COPY servicio_tarifa/src ./servicio_tarifa/src
+COPY api-gateway/src ./api-gateway/src 
 
-# Construir (compilar) todo el proyecto
+# 5. Construir (empaquetar) todo el proyecto
 RUN mvn package -DskipTests
 
-# ---
-# Etapa 2: Crear la imagen final y ligera
+# --- Etapa Final: Crear la imagen ligera ---
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-# ¡LA LÍNEA CLAVE! Copiar solo el JAR que necesitamos de la etapa 1
+# 6. Copiar SÓLO el JAR de este servicio
 COPY --from=builder /app/servicio_cliente/target/*.jar app.jar
 
-# Comando para ejecutar la aplicación
 ENTRYPOINT ["java", "-jar", "app.jar"]

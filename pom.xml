@@ -20,13 +20,14 @@
     <name>Sistema Logística - Parent</name>
     <description>Trabajo Práctico Integrado de Backend de Aplicaciones Web</description>
     
-    <!-- MÓDULOS (microservicios) -->
     <modules>
         <module>servicio_logistico</module>
         <module>servicio_cliente</module>
         <module>servicio_flota</module>
         <module>servicio_tarifa</module>
-    </modules>
+        
+        <module>api-gateway</module>
+        </modules>
     
     <properties>
         <java.version>21</java.version>
@@ -34,16 +35,13 @@
         <springdoc.version>2.8.4</springdoc.version>
     </properties>
     
-    <!-- DEPENDENCIAS COMUNES (heredadas por todos los módulos) -->
     <dependencies>
-        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
         
-        <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -53,7 +51,6 @@
     
     <dependencyManagement>
         <dependencies>
-            <!-- Spring Cloud -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -62,7 +59,6 @@
                 <scope>import</scope>
             </dependency>
             
-            <!-- OpenAPI/Swagger -->
             <dependency>
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>

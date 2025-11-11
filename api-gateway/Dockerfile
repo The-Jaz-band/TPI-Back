@@ -30,6 +30,6 @@ FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 # 6. Copiar SÓLO el JAR de este servicio
-COPY --from=builder /app/servicio_logistico/target/*.jar app.jar
+COPY --from=builder /app/api-gateway/target/*.jar app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

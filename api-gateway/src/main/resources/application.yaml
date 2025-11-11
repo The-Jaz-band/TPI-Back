@@ -1,0 +1,54 @@
+server:
+  port: 9000 # Puerto interno para el Gateway
+
+spring:
+  application:
+    name: api-gateway
+  
+  # --- Seguridad de Keycloak ---
+  # El Gateway TAMBIÉN valida el token, igual que tus otros servicios
+  # NOTA: Uso 'keycloak:8080' porque así se llamará el servicio en Docker.
+  # Tu archivo usa 'localhost', lo cual solo funciona fuera de Docker.
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8080/realms/logistica-realm
+          jwk-set-uri: http://keycloak:8080/realms/logistica-realm/protocol/openid-connect/certs
+
+  # --- Configuración de Spring Cloud Gateway (El Ruteo) ---
+  cloud:
+    gateway:
+      routes:
+        # 1. Ruta para Servicio Cliente (basado en tu Dockerfile)
+        - id: servicio-cliente
+          uri: http://servicio-cliente:8082 # Destino (el nombre del servicio en Docker)
+          predicates:
+            - Path=/api/clientes/** # Si la petición empieza con /api/clientes...
+
+        # 2. Ruta para Servicio Flota
+        - id: servicio-flota
+          uri: http://servicio-flota:8083
+          predicates:
+            - Path=/api/camiones/** # (O la ruta que uses, ej: /api/flota/**)
+
+        # 3. Ruta para Servicio Tarifa
+        - id: servicio-tarifa
+          uri: http://servicio-tarifa:8084
+          predicates:
+            - Path=/api/tarifas/**
+
+        # 4. Ruta para Servicio Logística (el principal)
+        - id: servicio-logistico
+          uri: http://servicio-logistico:8081
+          predicates:
+            # Agrega aquí TODAS las rutas de tu servicio de logística
+            - Path=/api/solicitudes/**
+            - Path=/api/rutas/**
+            - Path=/api/tramos/**
+            - Path=/api/depositos/**
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: DEBUG # Útil para ver qué está ruteando

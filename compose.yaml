@@ -91,10 +91,14 @@ services:
       KC_DB_PASSWORD: cjm81238
       KC_HOSTNAME_STRICT: false
       KC_HTTP_ENABLED: true
+      # --- Forzamos el 'issuer' ---
+      KC_HOSTNAME_URL: http://keycloak:8080
+      KC_HOSTNAME_ADMIN_URL: http://localhost:8080
     ports:
       - "8080:8080"
     depends_on:
-      - postgres-keycloak
+      postgres-keycloak:
+        condition: service_healthy
     networks:
       - logistica-network
     command: start-dev
@@ -115,6 +119,44 @@ services:
       - postgres-keycloak-data:/var/lib/postgresql/data
     networks:
       - logistica-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== API GATEWAY ====================
+  
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "9000:9000"
+    environment:
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/logistica-realm
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/logistica-realm/protocol/openid-connect/certs
+    
+    # ===================================================================
+    # CAMBIO AQUÍ: Arreglada la sintaxis de depends_on
+    # ===================================================================
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      servicio-logistica:
+        condition: service_started
+      servicio-cliente:
+        condition: service_started
+      servicio-flota:
+        condition: service_started
+      servicio-tarifa:
+        condition: service_started
+    # ===================================================================
+
+    networks:
+      - logistica-network
+    restart: on-failure
 
   # ==================== MICROSERVICIOS ====================
   
@@ -132,27 +174,24 @@ services:
       MICROSERVICES_CLIENTES_URL: http://servicio-cliente:8082
       MICROSERVICES_FLOTA_URL: http://servicio-flota:8083
       MICROSERVICES_TARIFAS_URL: http://servicio-tarifa:8084
-      
-      # --- Variables de Google Maps (¡AHORA SÍ!) ---
       MICROSERVICES_GOOGLE_MAPS_BASE_URL: maps.googleapis.com
       MICROSERVICES_GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY} 
-      
-      # --- Variables de SpringDoc para el BACKEND ---
       SPRINGDOC_OAUTH2_AUTHORIZATION_URL: http://keycloak:8080/realms/logistica-realm/protocol/openid-connect/auth
       SPRINGDOC_OAUTH2_TOKEN_URL: http://keycloak:8080/realms/logistica-realm/protocol/openid-connect/token
-      
-      # --- Variables de Swagger UI para el FRONTEND ---
       SPRINGDOC_SWAGGER_UI_OAUTH_AUTHORIZATION_URL: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/auth
       SPRINGDOC_SWAGGER_UI_OAUTH_TOKEN_URL: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/token
-
-    ports:
-      - "8081:8081"
     depends_on:
-      - postgres-logistica
-      - keycloak
-      - servicio-cliente
-      - servicio-flota
-      - servicio-tarifa
+      postgres-logistica:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      # Hacemos que logistica (el orquestador) dependa de los otros
+      servicio-cliente:
+        condition: service_started
+      servicio-flota:
+        condition: service_started
+      servicio-tarifa:
+        condition: service_started
     networks:
       - logistica-network
     restart: on-failure
@@ -167,20 +206,15 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: cjm81238
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/logistica-realm
-      
-      # --- Variables de SpringDoc para el BACKEND ---
       SPRINGDOC_OAUTH2_AUTHORIZATION_URL: http://keycloak:8080/realms/logistica-realm/protocol/openid-connect/auth
       SPRINGDOC_OAUTH2_TOKEN_URL: http://keycloak:8080/realms/logistica-realm/protocol/openid-connect/token
-
-      # --- Variables de Swagger UI para el FRONTEND ---
       SPRINGDOC_SWAGGER_UI_OAUTH_AUTHORIZATION_URL: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/auth
       SPRINGDOC_SWAGGER_UI_OAUTH_TOKEN_URL: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/token
-      
-    ports:
-      - "8082:8082"
     depends_on:
-      - postgres-cliente
-      - keycloak
+      postgres-cliente:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
     networks:
       - logistica-network
     restart: on-failure
@@ -195,20 +229,15 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: cjm81238
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/logistica-realm
-      
-      # --- Variables de SpringDoc para el BACKEND ---
       SPRINGDOC_OAUTH2_AUTHORIZATION_URL: http://keycloak:8080/realms/logistica-realm/protocol/openid-connect/auth
       SPRINGDOC_OAUTH2_TOKEN_URL: http://keycloak:8080/realms/logistica-realm/protocol/openid-connect/token
-
-      # --- Variables de Swagger UI para el FRONTEND ---
       SPRINGDOC_SWAGGER_UI_OAUTH_AUTHORIZATION_URL: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/auth
       SPRINGDOC_SWAGGER_UI_OAUTH_TOKEN_URL: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/token
-
-    ports:
-      - "8083:8083"
     depends_on:
-      - postgres-flota
-      - keycloak
+      postgres-flota:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
     networks:
       - logistica-network
     restart: on-failure
@@ -223,20 +252,15 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: cjm81238
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/logistica-realm
-      
-      # --- Variables de SpringDoc para el BACKEND ---
       SPRINGDOC_OAUTH2_AUTHORIZATION_URL: http://keycloak:8080/realms/logistica-realm/protocol/openid-connect/auth
       SPRINGDOC_OAUTH2_TOKEN_URL: http://keycloak:8080/realms/logistica-realm/protocol/openid-connect/token
-
-      # --- Variables de Swagger UI para el FRONTEND ---
       SPRINGDOC_SWAGGER_UI_OAUTH_AUTHORIZATION_URL: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/auth
       SPRINGDOC_SWAGGER_UI_OAUTH_TOKEN_URL: http://localhost:8080/realms/logistica-realm/protocol/openid-connect/token
-
-    ports:
-      - "8084:8084"
     depends_on:
-      - postgres-tarifa
-      - keycloak
+      postgres-tarifa:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
     networks:
       - logistica-network
     restart: on-failure
